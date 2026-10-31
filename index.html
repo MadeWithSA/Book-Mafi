@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Mafi</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #0d0e12;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Верхняя навигация */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 18px 8vw;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      background: rgba(13, 14, 18, 0.75);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .brand span {
+      color: #d4af37;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .nav-links button, .nav-links select {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .nav-links button:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: #d4af37;
+    }
+
+    .nav-links select option {
+      background: #14161d;
+      color: #fff;
+    }
+
+    .cart-badge {
+      background: #d4af37;
+      color: #0b0b0d;
+      border-radius: 50%;
+      padding: 2px 7px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      margin-left: 5px;
+    }
+
+    /* Фоновый видео-холст */
+    .viewport {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Трек скролла видео */
+    .scroll-track {
+      height: 380vh;
+      position: relative;
+    }
+
+    .content-overlay {
+      position: relative;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .step {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 8vw;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .step.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .step-badge {
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #d4af37;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .step h2 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 800;
+      max-width: 600px;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+
+    .step p {
+      font-size: clamp(1rem, 1.4vw, 1.2rem);
+      color: #b0b0b5;
+      max-width: 500px;
+      line-height: 1.6;
+    }
+
+    #source-video {
+      display: none;
+    }
+
+    .loader {
+      position: fixed;
+      inset: 0;
+      background: #0d0e12;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
+    }
+
+    .loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #d4af37;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Блок каталога, который появляется снизу после скролла */
+    .catalog-section {
+      position: relative;
+      z-index: 10;
+      background: #0d0e12;
+      padding: 80px 8vw 100px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .section-title {
+      font-size: 2.3rem;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .section-subtitle {
+      color: #888;
+      margin-bottom: 40px;
+      font-size: 1.05rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 28px;
+    }
+
+    .card {
+      background: #15171e;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(212, 175, 55, 0.4);
+    }
+
+    .card img {
+      width: 100%;
+      height: 320px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      background: #1b1d24;
+    }
+
+    .card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .card .author {
+      color: #8f9098;
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+    }
+
+    .card .price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #d4af37;
+      margin-top: auto;
+      margin-bottom: 16px;
+    }
+
+    .btn-add {
+      background: #d4af37;
+      color: #0b0b0d;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover {
+      background: #e5bd47;
+    }
+
+    /* Модальные окна */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      backdrop-filter: blur(5px);
+      padding: 20px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #171922;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
+      max-width: 500px;
+      border-radius: 16px;
+      padding: 28px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 1.8rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qty-controls button {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .cart-total {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      color: #d4af37;
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #999;
+      margin-bottom: 6px;
+    }
+
+    .input-group input, .input-group textarea {
+      width: 100%;
+      background: #0f1015;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      outline: none;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: #d4af37;
+      color: #0b0b0d;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-submit:hover {
+      background: #e5bd47;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p>Book Mafi...</p>
+  </div>
+
+  <header>
+    <a href="#" class="brand">Book <span>Mafi</span></a>
+    <div class="nav-links">
+      <button onclick="openProfile()" id="btn-profile">Профиль</button>
+      <button onclick="openCart()">
+        <span id="btn-cart-text">Корзина</span>
+        <span class="cart-badge" id="cart-count">0</span>
+      </button>
+      <select id="lang-select" onchange="changeLang(this.value)">
+        <option value="ru">RU</option>
+        <option value="uz">UZ</option>
+        <option value="en">EN</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- 3D Видео Фон -->
+  <div class="viewport">
+    <canvas id="scene-canvas"></canvas>
+  </div>
+  <video id="source-video" src="video_smooth.mp4" preload="auto" muted playsinline></video>
+
+  <!-- Скролл-шаги по книге Atomic Habits -->
+  <main class="scroll-track">
+    <div class="content-overlay">
+      <section class="step active">
+        <span class="step-badge" data-i18n="s1_badge">James Clear</span>
+        <h2 data-i18n="s1_title">Atomic Habits</h2>
+        <p data-i18n="s1_desc">Крошечные изменения приводят к поразительным результатам. Прокрутите вниз, чтобы изучить книгу и открыть каталог.</p>
+      </section>
+
+      <section class="step">
+        <span class="step-badge" data-i18n="s2_badge">Принцип 1%</span>
+        <h2 data-i18n="s2_title">Сила системы</h2>
+        <p data-i18n="s2_desc">Вы не поднимаетесь до уровня своих целей, вы опускаетесь до уровня своих систем.</p>
+      </section>
+
+      <section class="step">
+        <span class="step-badge" data-i18n="s3_badge">4 Закона</span>
+        <h2 data-i18n="s3_title">Формирование привычек</h2>
+        <p data-i18n="s3_desc">Сделайте это очевидным, привлекательным, простым и приносящим удовлетворение.</p>
+      </section>
+    </div>
+  </main>
+
+  <!-- Витрина с товарами сразу снизу после скролла -->
+  <section class="catalog-section" id="catalog-section">
+    <h2 class="section-title" id="page-title">Каталог книг</h2>
+    <p class="section-subtitle" id="page-subtitle">Бестселлеры саморазвития и бизнеса</p>
+    <div class="grid" id="catalog-grid"></div>
+  </section>
+
+  <!-- Модальное окно Корзины -->
+  <div class="modal-backdrop" id="cart-modal">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h2 id="cart-title">Ваша Корзина</h2>
+        <button class="close-btn" onclick="closeModals()">&times;</button>
+      </div>
+      <div id="cart-items"></div>
+      <div class="cart-total">
+        <span id="total-label">Итого:</span>
+        <span id="cart-total-price">0 UZS</span>
+      </div>
+
+      <form onsubmit="submitOrder(event)">
+        <div class="input-group">
+          <label id="lbl-name">Ваше имя</label>
+          <input type="text" id="order-name" required placeholder="Имя" />
+        </div>
+        <div class="input-group">
+          <label id="lbl-phone">Номер телефона</label>
+          <input type="tel" id="order-phone" required placeholder="+998 90 123 45 67" />
+        </div>
+        <div class="input-group">
+          <label id="lbl-address">Адрес доставки</label>
+          <textarea id="order-address" rows="2" required placeholder="Город, улица, дом"></textarea>
+        </div>
+        <button type="submit" class="btn-submit" id="btn-order">Оформить заказ</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Модальное окно Профиля -->
+  <div class="modal-backdrop" id="profile-modal">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h2 id="profile-title">Профиль читателя</h2>
+        <button class="close-btn" onclick="closeModals()">&times;</button>
+      </div>
+      <form onsubmit="saveProfile(event)">
+        <div class="input-group">
+          <label id="lbl-p-name">Имя</label>
+          <input type="text" id="prof-name" placeholder="Ваше имя" />
+        </div>
+        <div class="input-group">
+          <label id="lbl-p-phone">Телефон</label>
+          <input type="tel" id="prof-phone" placeholder="+998 ..." />
+        </div>
+        <div class="input-group">
+          <label id="lbl-p-address">Сохраненный адрес</label>
+          <textarea id="prof-address" rows="2" placeholder="Адрес по умолчанию"></textarea>
+        </div>
+        <button type="submit" class="btn-submit" id="btn-save-profile">Сохранить</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const BOT_TOKEN = "9124482530:AAGkGyeahI_m6hkLlF1Cj-p6MPY3MMSEQys";
+    const CHAT_ID = "5249728466";
+
+    const i18n = {
+      ru: {
+        s1_badge: "James Clear",
+        s1_title: "Atomic Habits",
+        s1_desc: "Крошечные изменения приводят к поразительным результатам. Прокрутите вниз, чтобы изучить книгу и открыть каталог.",
+        s2_badge: "Принцип 1%",
+        s2_title: "Сила системы",
+        s2_desc: "Вы не поднимаетесь до уровня своих целей, вы опускаетесь до уровня своих систем.",
+        s3_badge: "4 Закона",
+        s3_title: "Формирование привычек",
+        s3_desc: "Сделайте это очевидным, привлекательным, простым и приносящим удовлетворение.",
+        profile: "Профиль",
+        cart: "Корзина",
+        title: "Каталог книг",
+        subtitle: "Бестселлеры саморазвития и бизнеса",
+        add: "В корзину",
+        cart_empty: "Корзина пуста",
+        cart_title: "Ваша Корзина",
+        total: "Итого:",
+        name: "Ваше имя",
+        phone: "Номер телефона",
+        address: "Адрес доставки",
+        order: "Оформить заказ",
+        profile_title: "Профиль читателя",
+        save: "Сохранить",
+        order_success: "Заказ успешно отправлен в Telegram!",
+        order_error: "Ошибка отправки заказа."
+      },
+      uz: {
+        s1_badge: "James Clear",
+        s1_title: "Atom Odatlar",
+        s1_desc: "Kichik o'zgarishlar ajoyib natijalarga olib keladi. Kitobni o'rganish va katalogni ochish uchun pastga aylantiring.",
+        s2_badge: "1% Qoidasi",
+        s2_title: "Tizim kuchi",
+        s2_desc: "Siz maqsadlaringiz darajasiga ko'tarilmaysiz, tizimlaringiz darajasiga tushasiz.",
+        s3_badge: "4 ta Qonun",
+        s3_title: "Odat shakllantirish",
+        s3_desc: "Odatni aniq, jozibali, oson va yoqimli qiling.",
+        profile: "Profil",
+        cart: "Savat",
+        title: "Kitoblar katalogi",
+        subtitle: "Shaxsiy rivojlanish va biznes bestsellerlari",
+        add: "Savatga qo'shish",
+        cart_empty: "Savat bo'sh",
+        cart_title: "Sizning Savatingiz",
+        total: "Jami:",
+        name: "Ismingiz",
+        phone: "Telefon raqamingiz",
+        address: "Yetkazib berish manzili",
+        order: "Buyurtma berish",
+        profile_title: "Kitobxon profili",
+        save: "Saqlash",
+        order_success: "Buyurtma Telegram orqali yuborildi!",
+        order_error: "Buyurtma yuborishda xatolik yuz berdi."
+      },
+      en: {
+        s1_badge: "James Clear",
+        s1_title: "Atomic Habits",
+        s1_desc: "Tiny changes, remarkable results. Scroll down to discover the book and explore the catalog.",
+        s2_badge: "1% Rule",
+        s2_title: "Power of Systems",
+        s2_desc: "You do not rise to the level of your goals. You fall to the level of your systems.",
+        s3_badge: "4 Laws",
+        s3_title: "Habit Formation",
+        s3_desc: "Make it obvious, attractive, easy, and satisfying.",
+        profile: "Profile",
+        cart: "Cart",
+        title: "Book Catalog",
+        subtitle: "Bestsellers in personal growth & business",
+        add: "Add to Cart",
+        cart_empty: "Cart is empty",
+        cart_title: "Your Cart",
+        total: "Total:",
+        name: "Your Name",
+        phone: "Phone Number",
+        address: "Delivery Address",
+        order: "Place Order",
+        profile_title: "Reader Profile",
+        save: "Save",
+        order_success: "Order successfully sent to Telegram!",
+        order_error: "Error sending order."
+      }
+    };
+
+    const books = [
+      {
+        id: 1,
+        title: "Atomic Habits",
+        author: "James Clear",
+        price: 135000,
+        img: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 2,
+        title: "Deep Work",
+        author: "Cal Newport",
+        price: 120000,
+        img: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 3,
+        title: "The Psychology of Money",
+        author: "Morgan Housel",
+        price: 130000,
+        img: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 4,
+        title: "Think and Grow Rich",
+        author: "Napoleon Hill",
+        price: 110000,
+        img: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=600&q=80"
+      }
+    ];
+
+    let currentLang = localStorage.getItem('book_mafi_lang') || 'ru';
+
+    function changeLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('book_mafi_lang', lang);
+      document.getElementById('lang-select').value = lang;
+
+      const d = i18n[lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (d[key]) el.textContent = d[key];
+      });
+
+      document.getElementById('btn-profile').textContent = d.profile;
+      document.getElementById('btn-cart-text').textContent = d.cart;
+      document.getElementById('page-title').textContent = d.title;
+      document.getElementById('page-subtitle').textContent = d.subtitle;
+      document.getElementById('cart-title').textContent = d.cart_title;
+      document.getElementById('total-label').textContent = d.total;
+      document.getElementById('lbl-name').textContent = d.name;
+      document.getElementById('lbl-phone').textContent = d.phone;
+      document.getElementById('lbl-address').textContent = d.address;
+      document.getElementById('btn-order').textContent = d.order;
+      document.getElementById('profile-title').textContent = d.profile_title;
+      document.getElementById('btn-save-profile').textContent = d.save;
+
+      renderCatalog();
+      renderCart();
+    }
+
+    function renderCatalog() {
+      const grid = document.getElementById('catalog-grid');
+      const d = i18n[currentLang];
+      grid.innerHTML = books.map(b => `
+        <div class="card">
+          <img src="${b.img}" alt="${b.title}" />
+          <h3>${b.title}</h3>
+          <div class="author">${b.author}</div>
+          <div class="price">${b.price.toLocaleString()} UZS</div>
+          <button class="btn-add" onclick="addToCart(${b.id})">${d.add}</button>
+        </div>
+      `).join('');
+    }
+
+    /* Видео + Скролл логика */
+    const canvas = document.getElementById('scene-canvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const video = document.getElementById('source-video');
+    const loader = document.getElementById('loader');
+    const steps = document.querySelectorAll('.step');
+
+    let isVideoReady = false;
+    let targetTime = 0;
+    let currentTime = 0;
+
+    function resizeCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      renderFrame();
+    }
+
+    function renderFrame() {
+      if (!isVideoReady || !video.videoWidth) return;
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const scale = Math.max(cw / vw, ch / vh);
+      const nw = vw * scale;
+      const nh = vh * scale;
+      ctx.drawImage(video, (cw - nw) / 2, (ch - nh) / 2, nw, nh);
+    }
+
+    function getScrollFraction() {
+      const track = document.querySelector('.scroll-track');
+      const maxScroll = track.offsetHeight - window.innerHeight;
+      if (maxScroll <= 0) return 0;
+      return Math.min(Math.max(window.scrollY / maxScroll, 0), 1);
+    }
+
+    function updateLoop() {
+      if (isVideoReady && video.duration) {
+        currentTime += (targetTime - currentTime) * 0.12;
+        if (Math.abs(currentTime - video.currentTime) > 0.002) {
+          if ('fastSeek' in video) video.fastSeek(currentTime);
+          else video.currentTime = currentTime;
+        }
+      }
+      requestAnimationFrame(updateLoop);
+    }
+
+    window.addEventListener('scroll', () => {
+      const fraction = getScrollFraction();
+      if (video.duration) {
+        targetTime = fraction * video.duration;
+      }
+      const stepIndex = Math.min(Math.floor(fraction * steps.length), steps.length - 1);
+      steps.forEach((step, idx) => step.classList.toggle('active', idx === stepIndex));
+    }, { passive: true });
+
+    window.addEventListener('resize', resizeCanvas);
+    video.addEventListener('seeked', renderFrame);
+
+    function initVideo() {
+      if (isVideoReady) return;
+      isVideoReady = true;
+      loader.classList.add('hidden');
+      resizeCanvas();
+      targetTime = getScrollFraction() * video.duration;
+      video.currentTime = targetTime;
+      renderFrame();
+      requestAnimationFrame(updateLoop);
+    }
+
+    video.addEventListener('loadeddata', initVideo);
+    if (video.readyState >= 2) initVideo();
+
+    /* Корзина и профиль */
+    function getCart() {
+      return JSON.parse(localStorage.getItem('book_mafi_cart') || '[]');
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem('book_mafi_cart', JSON.stringify(cart));
+      updateBadge();
+    }
+
+    function updateBadge() {
+      const cart = getCart();
+      const count = cart.reduce((acc, item) => acc + item.qty, 0);
+      document.getElementById('cart-count').textContent = count;
+    }
+
+    function addToCart(id) {
+      const cart = getCart();
+      const book = books.find(b => b.id === id);
+      const exist = cart.find(b => b.id === id);
+      if (exist) exist.qty += 1;
+      else cart.push({ id: book.id, title: book.title, price: book.price, qty: 1 });
+      saveCart(cart);
+      renderCart();
+    }
+
+    function changeQty(id, delta) {
+      let cart = getCart();
+      const item = cart.find(x => x.id === id);
+      if (item) {
+        item.qty += delta;
+        if (item.qty <= 0) cart = cart.filter(x => x.id !== id);
+      }
+      saveCart(cart);
+      renderCart();
+    }
+
+    function renderCart() {
+      const cart = getCart();
+      const container = document.getElementById('cart-items');
+      const d = i18n[currentLang];
+
+      if (cart.length === 0) {
+        container.innerHTML = `<p style="color: #777; padding: 20px 0;">${d.cart_empty}</p>`;
+        document.getElementById('cart-total-price').textContent = '0 UZS';
+        return;
+      }
+
+      let total = 0;
+      container.innerHTML = cart.map(item => {
+        total += item.price * item.qty;
+        return `
+          <div class="cart-item">
+            <div>
+              <strong>${item.title}</strong>
+              <div style="color: #999; font-size: 0.85rem;">${item.price.toLocaleString()} UZS &times; ${item.qty}</div>
+            </div>
+            <div class="qty-controls">
+              <button onclick="changeQty(${item.id}, -1)">-</button>
+              <span>${item.qty}</span>
+              <button onclick="changeQty(${item.id}, 1)">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('cart-total-price').textContent = `${total.toLocaleString()} UZS`;
+    }
+
+    function openCart() {
+      renderCart();
+      loadProfileToForm();
+      document.getElementById('cart-modal').classList.add('active');
+    }
+
+    function openProfile() {
+      const profile = JSON.parse(localStorage.getItem('book_mafi_user') || '{}');
+      document.getElementById('prof-name').value = profile.name || '';
+      document.getElementById('prof-phone').value = profile.phone || '';
+      document.getElementById('prof-address').value = profile.address || '';
+      document.getElementById('profile-modal').classList.add('active');
+    }
+
+    function closeModals() {
+      document.getElementById('cart-modal').classList.remove('active');
+      document.getElementById('profile-modal').classList.remove('active');
+    }
+
+    window.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-backdrop')) closeModals();
+    });
+
+    function saveProfile(e) {
+      e.preventDefault();
+      const profile = {
+        name: document.getElementById('prof-name').value.trim(),
+        phone: document.getElementById('prof-phone').value.trim(),
+        address: document.getElementById('prof-address').value.trim()
+      };
+      localStorage.setItem('book_mafi_user', JSON.stringify(profile));
+      closeModals();
+    }
+
+    function loadProfileToForm() {
+      const profile = JSON.parse(localStorage.getItem('book_mafi_user') || '{}');
+      if (profile.name) document.getElementById('order-name').value = profile.name;
+      if (profile.phone) document.getElementById('order-phone').value = profile.phone;
+      if (profile.address) document.getElementById('order-address').value = profile.address;
+    }
+
+    async function submitOrder(e) {
+      e.preventDefault();
+      const cart = getCart();
+      const d = i18n[currentLang];
+
+      if (cart.length === 0) {
+        alert(d.cart_empty);
+        return;
+      }
+
+      const name = document.getElementById('order-name').value.trim();
+      const phone = document.getElementById('order-phone').value.trim();
+      const address = document.getElementById('order-address').value.trim();
+
+      let total = 0;
+      let itemsText = cart.map(i => {
+        total += i.price * i.qty;
+        return `• ${i.title} (${i.qty} шт.) — ${(i.price * i.qty).toLocaleString()} UZS`;
+      }).join('\n');
+
+      const message = `📚 *Новый заказ в Book Mafi!*\n\n` +
+                      `👤 *Покупатель:* ${name}\n` +
+                      `📞 *Телефон:* ${phone}\n` +
+                      `📍 *Адрес:* ${address}\n\n` +
+                      `🛒 *Товары:*\n${itemsText}\n\n` +
+                      `💰 *Итого к оплате:* ${total.toLocaleString()} UZS`;
+
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        });
+
+        if (response.ok) {
+          alert(d.order_success);
+          localStorage.removeItem('book_mafi_cart');
+          updateBadge();
+          closeModals();
+        } else {
+          alert(d.order_error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert(d.order_error);
+      }
+    }
+
+    changeLang(currentLang);
+    updateBadge();
+  </script>
+</body>
+</html>
