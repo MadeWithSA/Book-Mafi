@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book Mafi — Корзина</title>
+<script>try{document.documentElement.setAttribute('data-theme',JSON.parse(localStorage.getItem('bm_theme')||'"dark"'))}catch(e){}</script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="cart">
+<main class="page">
+  <div class="page-head enter"><h1 data-i18n="cart_title"></h1><p data-i18n="cart_sub"></p></div>
+  <div class="cart-layout">
+    <div class="cart-list" id="cart-list"></div>
+    <form class="panel-box enter" id="order-form" style="animation-delay:.2s">
+      <h3 data-i18n="order"></h3>
+      <div class="sum"><span data-i18n="items"></span><span id="sum-items">0</span></div>
+      <div class="sum"><span data-i18n="delivery"></span><span id="sum-del"></span></div>
+      <div class="sum big"><span data-i18n="total"></span><span id="sum-total">0</span></div>
+      <div style="height:18px"></div>
+      <div class="field"><label data-i18n="name"></label><input id="o-name" required data-i18n-ph="ph_name"></div>
+      <div class="field"><label data-i18n="phone"></label><input id="o-phone" type="tel" required placeholder="+998 90 123 45 67"></div>
+      <div class="field"><label data-i18n="address"></label><textarea id="o-addr" rows="2" required data-i18n-ph="ph_addr"></textarea></div>
+      <button class="btn" type="submit" data-i18n="order"></button>
+    </form>
+  </div>
+</main>
+<script src="js/books.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

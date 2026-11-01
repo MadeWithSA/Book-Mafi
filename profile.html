@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book Mafi — Профиль</title>
+<script>try{document.documentElement.setAttribute('data-theme',JSON.parse(localStorage.getItem('bm_theme')||'"dark"'))}catch(e){}</script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="profile">
+<main class="page">
+  <div class="page-head enter"><h1 data-i18n="prof_title"></h1><p data-i18n="prof_sub"></p></div>
+  <div class="stats enter" style="animation-delay:.1s">
+    <div class="stat"><b id="st-orders">0</b><span data-i18n="stat_orders"></span></div>
+    <div class="stat"><b id="st-fav">0</b><span data-i18n="stat_fav"></span></div>
+    <div class="stat"><b id="st-cart">0</b><span data-i18n="stat_cart"></span></div>
+  </div>
+  <div class="profile-layout">
+    <form class="panel-box enter" id="profile-form" style="animation-delay:.2s;position:static">
+      <div class="avatar" id="avatar">B</div>
+      <h3 data-i18n="prof_data"></h3>
+      <div class="field"><label data-i18n="name"></label><input id="p-name" data-i18n-ph="ph_name"></div>
+      <div class="field"><label data-i18n="phone"></label><input id="p-phone" type="tel" placeholder="+998 90 123 45 67"></div>
+      <div class="field"><label data-i18n="address"></label><textarea id="p-addr" rows="2" data-i18n-ph="ph_addr"></textarea></div>
+      <button class="btn" type="submit" data-i18n="save"></button>
+    </form>
+    <div class="enter" style="animation-delay:.3s">
+      <h3 style="font-size:1.4rem;margin-bottom:16px" data-i18n="orders"></h3>
+      <div id="orders"></div>
+    </div>
+  </div>
+</main>
+<script src="js/books.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
