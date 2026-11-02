@@ -351,7 +351,7 @@ function initHome(boot) {
   let ready = false, target = 0, cur = 0, lastDrawn = -1, frac = 0;
 
   /* декор сцен */
-  $('.hearts').innerHTML = Array.from({ length: 16 }, (_, i) => `<span style="left:${(i * 6.4 + Math.random() * 4) % 100}%;animation-delay:${-Math.random() * 7}s;font-size:${1.2 + Math.random() * 2}rem">${['❤', '💖', '💜'][i % 3]}</span>`).join('');
+  $('.hearts').innerHTML = Array.from({ length: 16 }, (_, i) => `<span style="left:${(i * 6.4 + Math.random() * 4) % 100}%;animation-delay:${-Math.random() * 7}s;font-size:${1.2 + Math.random() * 2}rem">${['✦', '❖', '✧'][i % 3]}</span>`).join('');
 
   const resize = () => {
     const dpr = Math.min(devicePixelRatio || 1, 2);
